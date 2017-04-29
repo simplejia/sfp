@@ -9,7 +9,7 @@ import (
 
 const (
 	MaxRetry          = 3
-	DemoteHeaderKey   = "__ZY-DEMOTE__"
+	DemoteHeaderKey   = "__SFP-DEMOTE__"
 	DemoteHeaderValue = "YES"
 )
 
@@ -24,6 +24,7 @@ type ChData struct {
 	Body   []byte
 	Yar    bool
 	Demote bool
+	Method string
 }
 
 type AsyncT struct {

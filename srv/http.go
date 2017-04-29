@@ -19,7 +19,7 @@ import (
 func ReqHttp(w http.ResponseWriter, r *http.Request) (code int) {
 	fun := "srv.ReqHttp"
 	code = http.StatusOK
-	uri := r.RequestURI
+	uri := strings.TrimSuffix(r.RequestURI, "/")
 	c := conf.Get()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -45,6 +45,7 @@ func ReqHttp(w http.ResponseWriter, r *http.Request) (code int) {
 		Elem:   busiElem,
 		Body:   body,
 		Demote: demote,
+		Method: r.Method,
 	}
 	var value interface{}
 	if busiElem.Read { // read
@@ -135,7 +136,13 @@ func TransHttp(data *ChData) interface{} {
 		gpp.Headers = map[string]string{DemoteHeaderKey: DemoteHeaderValue}
 	}
 	for step := -1; step < data.Elem.Retry && step < MaxRetry; step++ {
-		rsp, err := utils.Post(gpp)
+		var rsp []byte
+		var err error
+		if strings.ToLower(data.Method) == "post" {
+			rsp, err = utils.Post(gpp)
+		} else {
+			rsp, err = utils.Get(gpp)
+		}
 		if err != nil {
 			clog.Error("%s http error, err: %v, gpp: %v, step: %d", fun, err, gpp, step)
 			continue
