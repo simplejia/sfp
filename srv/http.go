@@ -36,22 +36,16 @@ func ReqHttp(w http.ResponseWriter, r *http.Request) (code int) {
 		return
 	}
 
-	demote := busiElem.Demote
-	if busiElem.UseGlobalDemote {
-		demote = c.App.Demote
-	}
-
 	chData := &ChData{
 		Uri:    uri,
 		Elem:   busiElem,
 		Body:   body,
-		Demote: demote,
 		Method: r.Method,
 	}
 	var value interface{}
 	if busiElem.Read { // read
 		x := body
-		if demote {
+		if busiElem.GetDemote() {
 			if excludeKey := busiElem.DemoteExcludeKey; len(excludeKey) > 0 {
 				var y map[string]interface{}
 				err := json.Unmarshal(body, &y)
@@ -88,11 +82,10 @@ func ReqHttp(w http.ResponseWriter, r *http.Request) (code int) {
 			value = valueLc
 		}
 	} else { // write
-		async := busiElem.Async
-		if !async {
+		if !busiElem.Async {
 			value = TransHttp(chData)
 		} else {
-			if demote {
+			if busiElem.GetDemote() {
 				AT.AddDemote(chData)
 			} else {
 				AT.Add(chData)
@@ -133,7 +126,7 @@ func TransHttp(data *ChData) interface{} {
 		Timeout: time.Millisecond * time.Duration(data.Elem.Timeout),
 		Params:  data.Body,
 	}
-	if data.Demote {
+	if data.Elem.GetDemote() {
 		gpp.Headers = map[string]string{DemoteHeaderKey: DemoteHeaderValue}
 	}
 	for step := -1; step < data.Elem.Retry && step < MaxRetry; step++ {

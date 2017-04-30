@@ -20,10 +20,9 @@ type Nop struct {
 
 type ChData struct {
 	Uri    string
-	Elem   *conf.BusiElem
 	Body   []byte
-	Demote bool
 	Method string
+	Elem   *conf.BusiElem
 }
 
 type AsyncT struct {

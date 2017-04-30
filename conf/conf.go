@@ -62,6 +62,14 @@ type BusiElem struct {
 	Expire           string
 }
 
+func (busiElem *BusiElem) GetDemote() bool {
+	if busiElem.UseGlobalDemote {
+		c := Get()
+		return c.App.Demote
+	}
+	return busiElem.Demote
+}
+
 func Get() *Conf {
 	return C.Load().(*Conf)
 }

@@ -53,16 +53,10 @@ func ReqYar(w http.ResponseWriter, r *http.Request) (code int) {
 		return
 	}
 
-	demote := busiElem.Demote
-	if busiElem.UseGlobalDemote {
-		demote = c.App.Demote
-	}
-
 	chData := &ChData{
 		Uri:    uri,
 		Elem:   busiElem,
 		Body:   body,
-		Demote: demote,
 		Method: r.Method,
 	}
 	var value interface{}
@@ -75,7 +69,7 @@ func ReqYar(w http.ResponseWriter, r *http.Request) (code int) {
 		}
 		clog.Debug("%s uri: %s, req body: %v", fun, uri, x)
 
-		if demote {
+		if busiElem.GetDemote() {
 			if excludeKey := busiElem.DemoteExcludeKey; len(excludeKey) > 0 {
 				x, ok := x.([]interface{})
 				if !ok || len(x) != 1 {
@@ -114,11 +108,10 @@ func ReqYar(w http.ResponseWriter, r *http.Request) (code int) {
 			value = valueLc
 		}
 	} else { // write
-		async := busiElem.Async
-		if !async {
+		if !busiElem.Async {
 			value = TransYar(chData)
 		} else {
-			if demote {
+			if busiElem.GetDemote() {
 				AT.AddDemote(chData)
 			} else {
 				AT.Add(chData)
@@ -157,7 +150,7 @@ func TransYar(data *ChData) interface{} {
 		Timeout: time.Millisecond * time.Duration(data.Elem.Timeout),
 		Params:  data.Body,
 	}
-	if data.Demote {
+	if data.Elem.GetDemote() {
 		gpp.Headers = map[string]string{DemoteHeaderKey: DemoteHeaderValue}
 	}
 	for step := -1; step < data.Elem.Retry && step < MaxRetry; step++ {
