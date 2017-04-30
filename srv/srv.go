@@ -15,7 +15,8 @@ import (
 
 func Srv(w http.ResponseWriter, r *http.Request) {
 	fun := "srv.Srv"
-	uri := strings.TrimSuffix(r.RequestURI, "/")
+	uri := r.RequestURI
+	path := strings.TrimSuffix(r.URL.Path, "/")
 	code := http.StatusOK
 	defer func(btime time.Time) {
 		if err := recover(); err != nil {
@@ -33,9 +34,9 @@ func Srv(w http.ResponseWriter, r *http.Request) {
 	c := conf.Get()
 
 	switch {
-	case c.Busi4Http[uri] != nil: // http
+	case c.Busi4Http[path] != nil: // http
 		code = ReqHttp(w, r)
-	case c.Busi4Yar[uri] != nil: // yar
+	case c.Busi4Yar[path] != nil: // yar
 		code = ReqYar(w, r)
 	default:
 		clog.Error("%s uri: %s, not found", fun, uri)

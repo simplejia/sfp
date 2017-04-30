@@ -20,7 +20,8 @@ import (
 func ReqYar(w http.ResponseWriter, r *http.Request) (code int) {
 	fun := "srv.ReqYar"
 	code = http.StatusOK
-	uri := strings.TrimSuffix(r.RequestURI, "/")
+	uri := r.RequestURI
+	path := strings.TrimSuffix(r.URL.Path, "/")
 	c := conf.Get()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -38,7 +39,7 @@ func ReqYar(w http.ResponseWriter, r *http.Request) (code int) {
 
 	clog.Debug("%s uri: %s, req: %v", fun, uri, rpcReq)
 
-	busi := c.Busi4Yar[uri]
+	busi := c.Busi4Yar[path]
 	if busi == nil {
 		clog.Error("%s uri: %s, err: not found", fun, uri)
 		code = http.StatusNotFound
@@ -63,7 +64,6 @@ func ReqYar(w http.ResponseWriter, r *http.Request) (code int) {
 		Body:   body,
 		Demote: demote,
 		Method: r.Method,
-		Yar:    true,
 	}
 	var value interface{}
 	if busiElem.Read { // read
@@ -79,11 +79,11 @@ func ReqYar(w http.ResponseWriter, r *http.Request) (code int) {
 			if excludeKey := busiElem.DemoteExcludeKey; len(excludeKey) > 0 {
 				x, ok := x.([]interface{})
 				if !ok || len(x) != 1 {
-					clog.Warn("%s uri: %s, req body: %v, not a slice: %T", fun, uri, x, x)
+					clog.Debug("%s uri: %s, req body: %v, not a slice: %T", fun, uri, x, x)
 				} else {
 					y, ok := x[0].(map[interface{}]interface{})
 					if !ok {
-						clog.Warn("%s uri: %s, req body: %v, not a map: %T", fun, uri, x, x[0])
+						clog.Debug("%s uri: %s, req body: %v, not a map: %T", fun, uri, x, x[0])
 					} else {
 						for _, ek := range excludeKey {
 							delete(y, ek)
@@ -163,7 +163,7 @@ func TransYar(data *ChData) interface{} {
 	for step := -1; step < data.Elem.Retry && step < MaxRetry; step++ {
 		var rsp []byte
 		var err error
-		if strings.ToLower(data.Method) == "post" {
+		if data.Method == http.MethodPost {
 			rsp, err = utils.Post(gpp)
 		} else {
 			rsp, err = utils.Get(gpp)

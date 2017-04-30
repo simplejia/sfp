@@ -19,7 +19,8 @@ import (
 func ReqHttp(w http.ResponseWriter, r *http.Request) (code int) {
 	fun := "srv.ReqHttp"
 	code = http.StatusOK
-	uri := strings.TrimSuffix(r.RequestURI, "/")
+	uri := r.RequestURI
+	path := strings.TrimSuffix(r.URL.Path, "/")
 	c := conf.Get()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -28,7 +29,7 @@ func ReqHttp(w http.ResponseWriter, r *http.Request) (code int) {
 		return
 	}
 
-	busiElem := c.Busi4Http[uri]
+	busiElem := c.Busi4Http[path]
 	if busiElem == nil {
 		clog.Error("%s uri: %s, err: not found", fun, uri)
 		code = http.StatusNotFound
@@ -55,7 +56,7 @@ func ReqHttp(w http.ResponseWriter, r *http.Request) (code int) {
 				var y map[string]interface{}
 				err := json.Unmarshal(body, &y)
 				if err != nil {
-					clog.Warn("%s uri: %s, err: %s, req body: %s", fun, uri, err, body)
+					clog.Debug("%s uri: %s, err: %s, req body: %s", fun, uri, err, body)
 				} else {
 					if y != nil {
 						for _, ek := range excludeKey {
@@ -138,7 +139,7 @@ func TransHttp(data *ChData) interface{} {
 	for step := -1; step < data.Elem.Retry && step < MaxRetry; step++ {
 		var rsp []byte
 		var err error
-		if strings.ToLower(data.Method) == "post" {
+		if data.Method == http.MethodPost {
 			rsp, err = utils.Post(gpp)
 		} else {
 			rsp, err = utils.Get(gpp)

@@ -9,8 +9,8 @@ import (
 
 const (
 	MaxRetry          = 3
-	DemoteHeaderKey   = "__SFP-DEMOTE__"
-	DemoteHeaderValue = "YES"
+	DemoteHeaderKey   = "SFP_DEMOTE"
+	DemoteHeaderValue = "Y"
 )
 
 type Nop struct {
@@ -22,7 +22,6 @@ type ChData struct {
 	Uri    string
 	Elem   *conf.BusiElem
 	Body   []byte
-	Yar    bool
 	Demote bool
 	Method string
 }
@@ -45,7 +44,7 @@ func (asyncT *AsyncT) Init() {
 
 func (asyncT *AsyncT) Proc() {
 	for data := range asyncT.Ch {
-		if data.Yar {
+		if data.Elem.Yar {
 			TransYar(data)
 		} else {
 			TransHttp(data)
@@ -55,7 +54,7 @@ func (asyncT *AsyncT) Proc() {
 
 func (asyncT *AsyncT) ProcDemote() {
 	for data := range asyncT.ChDemote {
-		if data.Yar {
+		if data.Elem.Yar {
 			TransYar(data)
 		} else {
 			TransHttp(data)
@@ -74,7 +73,6 @@ func (asyncT *AsyncT) Add(chData *ChData) {
 
 func (asyncT *AsyncT) AddDemote(chData *ChData) {
 	fun := "srv.AsyncT.AddDemote"
-	chData.Demote = true
 	select {
 	case asyncT.ChDemote <- chData:
 	default:
