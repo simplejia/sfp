@@ -73,11 +73,11 @@ func ReqYar(w http.ResponseWriter, r *http.Request) (code int) {
 			if excludeKey := busiElem.DemoteExcludeKey; len(excludeKey) > 0 {
 				x, ok := x.([]interface{})
 				if !ok || len(x) != 1 {
-					clog.Debug("%s uri: %s, req body: %v, not a slice: %T", fun, uri, x, x)
+					clog.Warn("%s uri: %s, req body: %v, not a slice: %T", fun, uri, x, x)
 				} else {
 					y, ok := x[0].(map[interface{}]interface{})
 					if !ok {
-						clog.Debug("%s uri: %s, req body: %v, not a map: %T", fun, uri, x, x[0])
+						clog.Warn("%s uri: %s, req body: %v, not a map: %T", fun, uri, x[0], x[0])
 					} else {
 						for _, ek := range excludeKey {
 							delete(y, ek)

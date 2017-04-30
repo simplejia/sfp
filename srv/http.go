@@ -44,24 +44,26 @@ func ReqHttp(w http.ResponseWriter, r *http.Request) (code int) {
 	}
 	var value interface{}
 	if busiElem.Read { // read
-		x := body
+		var x interface{}
+		x = string(body)
 		if busiElem.GetDemote() {
 			if excludeKey := busiElem.DemoteExcludeKey; len(excludeKey) > 0 {
-				var y map[string]interface{}
-				err := json.Unmarshal(body, &y)
+				err := json.Unmarshal(body, &x)
 				if err != nil {
-					clog.Debug("%s uri: %s, err: %s, req body: %s", fun, uri, err, body)
+					clog.Warn("%s uri: %s, err: %s, req body: %s", fun, uri, err, body)
 				} else {
-					if y != nil {
+					y, ok := x.(map[string]interface{})
+					if !ok {
+						clog.Warn("%s uri: %s, req body: %v, not a map: %T", fun, uri, x, x)
+					} else {
 						for _, ek := range excludeKey {
 							delete(y, ek)
 						}
-						x = []byte(fmt.Sprintf("%v", y))
 					}
 				}
 			}
 		}
-		ps := []byte(string(x))
+		ps := []byte(fmt.Sprintf("%v", x))
 		sort.Slice(ps, func(i, j int) bool { return ps[i] < ps[j] })
 		key := fmt.Sprintf(
 			"%s_%s",
