@@ -8,9 +8,7 @@ import (
 )
 
 const (
-	MaxRetry          = 3
-	DemoteHeaderKey   = "SFP_DEMOTE"
-	DemoteHeaderValue = "Y"
+	MaxRetry = 3
 )
 
 type Nop struct {
@@ -26,19 +24,16 @@ type ChData struct {
 }
 
 type AsyncT struct {
-	Ch       chan *ChData
-	ChDemote chan *ChData
+	Ch chan *ChData
 }
 
 func (asyncT *AsyncT) Init() {
 	c := conf.Get()
 	asyncT.Ch = make(chan *ChData, c.Cons.ChanCap)
-	asyncT.ChDemote = make(chan *ChData, c.Cons.ChanCap)
 
 	for i := 0; i < c.Cons.RoutineNum; i++ {
 		go asyncT.Proc()
 	}
-	go asyncT.ProcDemote()
 }
 
 func (asyncT *AsyncT) Proc() {
@@ -51,29 +46,10 @@ func (asyncT *AsyncT) Proc() {
 	}
 }
 
-func (asyncT *AsyncT) ProcDemote() {
-	for data := range asyncT.ChDemote {
-		if data.Elem.Yar {
-			TransYar(data)
-		} else {
-			TransHttp(data)
-		}
-	}
-}
-
 func (asyncT *AsyncT) Add(chData *ChData) {
 	fun := "srv.AsyncT.Add"
 	select {
 	case asyncT.Ch <- chData:
-	default:
-		clog.Error("%s chan full, data: %v", fun, chData)
-	}
-}
-
-func (asyncT *AsyncT) AddDemote(chData *ChData) {
-	fun := "srv.AsyncT.AddDemote"
-	select {
-	case asyncT.ChDemote <- chData:
 	default:
 		clog.Error("%s chan full, data: %v", fun, chData)
 	}

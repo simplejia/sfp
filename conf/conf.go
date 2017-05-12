@@ -47,19 +47,18 @@ type Conf struct {
 }
 
 type BusiElem struct {
-	Addr             string
-	Path             string
-	Action           string
-	Yar              bool
-	Ret              interface{}
-	Read             bool
-	Retry            int
-	Timeout          int
-	Async            bool
-	Demote           bool
-	UseGlobalDemote  bool
-	DemoteExcludeKey []string
-	Expire           string
+	Addr            string
+	Path            string
+	Action          string
+	Yar             bool
+	Ret             interface{}
+	Read            bool
+	Retry           int
+	Timeout         int
+	Async           bool
+	Demote          bool
+	UseGlobalDemote bool
+	Expire          string
 }
 
 func (busiElem *BusiElem) GetDemote() bool {
@@ -93,7 +92,7 @@ func remoteConf() {
 	go func() {
 		lastbody := []byte{}
 		for {
-			time.Sleep(time.Second * 10)
+			time.Sleep(time.Second * 3)
 
 			addr := c.VarHost.Addr
 			uri := fmt.Sprintf("http://%s/%s", addr, strings.TrimPrefix(c.VarHost.Cgi, "/"))
@@ -238,6 +237,9 @@ func parse(fcontent []byte) (err error) {
 			return fmt.Errorf("busi have same key, please check: %s", k)
 		}
 	}
+
+	// init log
+	clog.Init(c.Clog.Name, "", c.Clog.Level, c.Clog.Mode)
 
 	Set(c)
 

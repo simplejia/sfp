@@ -3,7 +3,7 @@
         "app": {
             "name": "sfp",
             "port": 12810, // 服务监听端口
-            "demote": true // 全局降级
+            "demote": false // 全局降级
         },
         "clog": {
             "name":"sfp",
@@ -11,7 +11,7 @@
             "level": 15 // 0: none, 1: debug, 2: warn 4: error 8: info (数字代表bit位)
         },
         "cons": {
-            "routineNum": 100, // 异步写操作时，并发协程数
+            "routineNum": 50, // 异步写操作时，并发协程数
             "chanCap": 1000000 // 队列容量
         },
         "varhost": { // 定时获取远程服务器最新配置，用于参数动态变更
@@ -32,57 +32,12 @@
                     "retry": 0, // 透传调用重试次数，0代表不重试，目前最多重试3次
                     "timeout": 80, // 单位：ms，透传调用超时
                     "async": false, // 是否异步透传，只有read为false时有效，对于有不能异步处理的场景，请设为false
-                    "demote": false, // 是否降级处理，启用降级后，当为read，将出现在demoteExcludeKey里的元素从请求参数里剔除后缓存，当为write，写请求异步到单个协程处理
+                    "demote": false, // 是否降级处理，启用降级后，直接返回"ret"数据
                     "useGlobalDemote": true, // 是否采用全局demote参数配置
-                    "demoteExcludeKey": ["T"], // 见demote
                     "expire": "3s" // 1ms, 1s, 1m, 1h，只有read为true时有效，用于lc缓存失效时间，建议不用设置过大，正常500ms就可以了
                 }
-            },
-            */
-            // danmaku
-            "danmaku": { 
-                "get_danmaku_list": {
-                    "addr": "127.0.0.1:8089",
-                    "path": "/danmaku/api",
-                    "action": "get_danmaku_list", 
-                    "yar": true,
-                    "read": true,
-                    "ret": {"errcode": 1},
-                    "timeout": 80, // 单位：ms
-                    "demote": false,
-                    "useGlobalDemote": true,
-                    "demoteExcludeKey": ["T"],
-                    "expire": "3s" // 1ms, 1s, 1m, 1h
-                },
-                "post": {
-                    "addr": "127.0.0.1:8089",
-                    "path": "/danmaku/api",
-                    "action": "post",
-                    "yar": true,
-                    "read": false,
-                    "ret": {"errcode": 1},
-                    "retry": 0,
-                    "timeout": 80, // 单位：ms
-                    "async": false,
-                    "demote": false,
-                    "useGlobalDemote": true
-                }
-            },
-            // user
-            "user": { 
-                "profile": {
-                    "addr": "127.0.0.1:8089",
-                    "path": "/user/api",
-                    "action": "profile", 
-                    "read": true,
-                    "ret": {"errcode": 1},
-                    "timeout": 80, // 单位：ms
-                    "demote": false,
-                    "useGlobalDemote": true,
-                    "demoteExcludeKey": ["T"],
-                    "expire": "3s" // 1s, 1m, 1h
-                }
             }
+            */
         }
     },
     "test": { // 运行环境，启动时通过-env参数指定，如：$prog -env test

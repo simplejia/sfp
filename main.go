@@ -9,13 +9,12 @@ import (
 
 	"github.com/simplejia/clog"
 	"github.com/simplejia/lc"
-	_ "github.com/simplejia/sfp/clog"
 	"github.com/simplejia/sfp/conf"
 	"github.com/simplejia/sfp/srv"
 )
 
 func init() {
-	lc.Init(1e6)
+	lc.Init(1e5)
 }
 
 func main() {

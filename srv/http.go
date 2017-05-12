@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sort"
 	"strings"
 	"time"
 
 	"encoding/json"
+
+	"sort"
 
 	"github.com/simplejia/clog"
 	"github.com/simplejia/lc"
@@ -36,61 +37,40 @@ func ReqHttp(w http.ResponseWriter, r *http.Request) (code int) {
 		return
 	}
 
-	chData := &ChData{
-		Uri:    uri,
-		Elem:   busiElem,
-		Body:   body,
-		Method: r.Method,
-	}
 	var value interface{}
-	if busiElem.Read { // read
-		var x interface{}
-		x = string(body)
-		if busiElem.GetDemote() {
-			if excludeKey := busiElem.DemoteExcludeKey; len(excludeKey) > 0 {
-				err := json.Unmarshal(body, &x)
-				if err != nil {
-					clog.Warn("%s uri: %s, err: %s, req body: %s", fun, uri, err, body)
-				} else {
-					y, ok := x.(map[string]interface{})
-					if !ok {
-						clog.Warn("%s uri: %s, req body: %v, not a map: %T", fun, uri, x, x)
-					} else {
-						for _, ek := range excludeKey {
-							delete(y, ek)
-						}
-					}
-				}
-			}
+	if !busiElem.GetDemote() {
+		chData := &ChData{
+			Uri:    uri,
+			Elem:   busiElem,
+			Body:   body,
+			Method: r.Method,
 		}
-		ps := []byte(fmt.Sprintf("%v", x))
-		sort.Slice(ps, func(i, j int) bool { return ps[i] < ps[j] })
-		key := fmt.Sprintf(
-			"%s_%s",
-			uri,
-			ps,
-		)
-		valueLc, ok := lc.Get(key)
-		if !ok {
-			_value := TransHttp(chData)
-			if _value != nil {
-				value = _value
+		if busiElem.Read { // read
+			x := strings.Split(string(body), ",")
+			sort.Strings(x)
+			key := fmt.Sprintf(
+				"%s_%s",
+				uri,
+				strings.Join(x, ","),
+			)
+			valueLc, ok := lc.Get(key)
+			if !ok {
+				_value := TransHttp(chData)
+				if _value != nil {
+					value = _value
+				} else {
+					value = valueLc
+				}
+				expire, _ := time.ParseDuration(busiElem.Expire)
+				lc.Set(key, value, expire)
 			} else {
 				value = valueLc
 			}
-			expire, _ := time.ParseDuration(busiElem.Expire)
-			lc.Set(key, value, expire)
-		} else {
-			value = valueLc
-		}
-	} else { // write
-		if !busiElem.Async {
-			value = TransHttp(chData)
-		} else {
-			if busiElem.GetDemote() {
-				AT.AddDemote(chData)
-			} else {
+		} else { // write
+			if busiElem.Async {
 				AT.Add(chData)
+			} else {
+				value = TransHttp(chData)
 			}
 		}
 	}
@@ -98,7 +78,6 @@ func ReqHttp(w http.ResponseWriter, r *http.Request) (code int) {
 	if value == nil {
 		value = busiElem.Ret
 	}
-
 	switch v := value.(type) {
 	case []byte:
 		_, err = w.Write(v)
@@ -128,9 +107,6 @@ func TransHttp(data *ChData) interface{} {
 		Timeout: time.Millisecond * time.Duration(data.Elem.Timeout),
 		Params:  data.Body,
 	}
-	if data.Elem.GetDemote() {
-		gpp.Headers = map[string]string{DemoteHeaderKey: DemoteHeaderValue}
-	}
 	for step := -1; step < data.Elem.Retry && step < MaxRetry; step++ {
 		var rsp []byte
 		var err error
@@ -140,11 +116,11 @@ func TransHttp(data *ChData) interface{} {
 			rsp, err = utils.Get(gpp)
 		}
 		if err != nil {
-			clog.Error("%s http error, err: %v, gpp: %v, step: %d", fun, err, gpp, step)
+			clog.Error("%s http error, err: %v, uri: %s, params: %s, step: %d", fun, err, data.Uri, string(data.Body), step)
 			continue
 		}
 
-		clog.Debug("%s uri: %s, rsp: %s", fun, data.Uri, rsp)
+		clog.Debug("%s uri: %s, params: %v, rsp: %s", fun, data.Uri, string(data.Body), rsp)
 
 		value = rsp
 		break
