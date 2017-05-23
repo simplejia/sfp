@@ -20,7 +20,7 @@ import (
 func ReqYar(w http.ResponseWriter, r *http.Request) (code int) {
 	fun := "srv.ReqYar"
 	code = http.StatusOK
-	uri := r.RequestURI
+	uri := r.URL.RequestURI()
 	path := strings.TrimSuffix(r.URL.Path, "/")
 	c := conf.Get()
 	body, err := ioutil.ReadAll(r.Body)
@@ -108,12 +108,14 @@ func ReqYar(w http.ResponseWriter, r *http.Request) (code int) {
 	rpcRsp := &rpc.Response{
 		Seq: rpcReq.Seq,
 	}
+
 	err = codec.WriteResponse(rpcRsp, value)
 	if err != nil {
 		clog.Error("%s codec.WriteResponse uri: %s, value: %v, err: %v", fun, uri, value, err)
 		code = http.StatusBadRequest
 		return
 	}
+
 	return
 }
 
@@ -165,7 +167,7 @@ func TransYar(data *ChData) interface{} {
 		codec := yar.NewClientCodec(Nop{ioutil.NopCloser(bytes.NewReader(rsp)), ioutil.Discard}, "msgpack")
 		rpcRsp := &rpc.Response{}
 		if err := codec.ReadResponseHeader(rpcRsp); err != nil {
-			clog.Error("%s codec.ReadRequestHeader uri: %s, params: %s, err: %v", fun, data.Uri, stringYar(data.Body), err)
+			clog.Error("%s codec.ReadResponseHeader uri: %s, params: %s, rsp: %s, err: %v", fun, data.Uri, stringYar(data.Body), rsp, err)
 			break
 		}
 
@@ -173,7 +175,7 @@ func TransYar(data *ChData) interface{} {
 
 		var x interface{}
 		if err := codec.ReadResponseBody(&x); err != nil {
-			clog.Error("%s codec.ReadRequestBody uri: %s, params: %s, err: %v", fun, data.Uri, stringYar(data.Body), err)
+			clog.Error("%s codec.ReadResponseBody uri: %s, params: %s, err: %v", fun, data.Uri, stringYar(data.Body), err)
 			break
 		}
 

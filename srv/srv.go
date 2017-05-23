@@ -15,12 +15,12 @@ import (
 
 func Srv(w http.ResponseWriter, r *http.Request) {
 	fun := "srv.Srv"
-	uri := r.RequestURI
+	uri := r.URL.RequestURI()
 	path := strings.TrimSuffix(r.URL.Path, "/")
 	code := http.StatusOK
 	defer func(btime time.Time) {
 		if err := recover(); err != nil {
-			clog.Error("%s uri: %s, elapse: %s, stack: %s", fun, uri, time.Since(btime), debug.Stack())
+			clog.Error("%s uri: %s, err: %v, stack: %s", fun, uri, err, debug.Stack())
 			code = http.StatusInternalServerError
 			http.Error(w, http.StatusText(code), code)
 		} else {

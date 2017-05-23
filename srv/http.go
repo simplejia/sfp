@@ -20,7 +20,7 @@ import (
 func ReqHttp(w http.ResponseWriter, r *http.Request) (code int) {
 	fun := "srv.ReqHttp"
 	code = http.StatusOK
-	uri := r.RequestURI
+	uri := r.URL.RequestURI()
 	path := strings.TrimSuffix(r.URL.Path, "/")
 	c := conf.Get()
 	body, err := ioutil.ReadAll(r.Body)

@@ -22,6 +22,7 @@ func main() {
 
 	http.HandleFunc("/", srv.Srv)
 	http.HandleFunc("/sfp/conf/get", conf.Cgi)
+	http.HandleFunc("/sfp/multi", srv.Multi)
 
 	c := conf.Get()
 	addr := fmt.Sprintf("%s:%d", "0.0.0.0", c.App.Port)
