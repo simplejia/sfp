@@ -26,5 +26,8 @@ func main() {
 
 	c := conf.Get()
 	addr := fmt.Sprintf("%s:%d", "0.0.0.0", c.App.Port)
-	clog.Error("main() err: %v", http.ListenAndServe(addr, nil))
+	err := ListenAndServe(addr, nil)
+	if err != nil {
+		clog.Error("main() err: %v", err)
+	}
 }
