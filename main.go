@@ -11,6 +11,7 @@ import (
 	"github.com/simplejia/lc"
 	"github.com/simplejia/sfp/conf"
 	"github.com/simplejia/sfp/srv"
+	"github.com/simplejia/utils"
 )
 
 func init() {
@@ -26,7 +27,7 @@ func main() {
 
 	c := conf.Get()
 	addr := fmt.Sprintf("%s:%d", "0.0.0.0", c.App.Port)
-	err := ListenAndServe(addr, nil)
+	err := utils.ListenAndServe(addr, nil)
 	if err != nil {
 		clog.Error("main() err: %v", err)
 	}
