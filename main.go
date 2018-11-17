@@ -9,6 +9,7 @@ import (
 
 	"github.com/simplejia/clog/api"
 	"github.com/simplejia/lc"
+	"github.com/simplejia/namecli/api"
 	"github.com/simplejia/sfp/conf"
 	"github.com/simplejia/sfp/srv"
 	"github.com/simplejia/utils"
@@ -16,17 +17,22 @@ import (
 
 func init() {
 	lc.Init(1e5)
+
+	clog.AddrFunc = func() (string, error) {
+		return api.Name("clog.srv.ns")
+	}
+	c := conf.Get()
+	clog.Init(c.App.Name, "", c.Clog.Level, c.Clog.Mode)
 }
 
 func main() {
 	clog.Info("main() start")
 
 	http.HandleFunc("/", srv.Srv)
-	http.HandleFunc("/sfp/conf/get", conf.Cgi)
 	http.HandleFunc("/sfp/multi", srv.Multi)
 
 	c := conf.Get()
-	addr := fmt.Sprintf("%s:%d", "0.0.0.0", c.App.Port)
+	addr := fmt.Sprintf(":%d", c.App.Port)
 	err := utils.ListenAndServe(addr, nil)
 	if err != nil {
 		clog.Error("main() err: %v", err)

@@ -6,17 +6,12 @@
             "demote": false // 全局降级
         },
         "clog": {
-            "name":"sfp",
             "mode": 1, // 0: none, 1: localfile, 2: clog (数字代表bit位)
             "level": 15 // 0: none, 1: debug, 2: warn 4: error 8: info (数字代表bit位)
         },
         "cons": {
             "routineNum": 50, // 异步写操作时，并发协程数
             "chanCap": 1000000 // 队列容量
-        },
-        "varhost": { // 定时获取远程服务器最新配置，用于参数动态变更
-            "addr": "127.0.0.1:12810",
-            "cgi": "/sfp/conf/get"
         },
         "busi": {
             // example

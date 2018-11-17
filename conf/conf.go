@@ -9,9 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"reflect"
-	"regexp"
-	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -29,7 +26,6 @@ type Conf struct {
 		Demote bool
 	}
 	Clog *struct {
-		Name  string
 		Mode  int
 		Level int
 	}
@@ -78,54 +74,37 @@ func Set(c *Conf) {
 }
 
 var (
-	Env      string
-	UserConf string
-	C        atomic.Value
+	Env string
+	C   atomic.Value
 )
 
-func remoteConf() {
-	c := Get()
-	if c.VarHost == nil {
-		return
-	}
+func reloadConf() {
+	var lastbody []byte
+	for {
+		time.Sleep(time.Second * 3)
 
-	go func() {
-		lastbody := []byte{}
-		for {
-			time.Sleep(time.Second * 3)
-
-			addr := c.VarHost.Addr
-			uri := fmt.Sprintf("http://%s/%s", addr, strings.TrimPrefix(c.VarHost.Cgi, "/"))
-			gpp := &utils.GPP{
-				Uri: uri,
-			}
-			body, err := utils.Get(gpp)
-			if err != nil {
-				clog.Error("conf.remoteConf() http error, err: %v, body: %s, gpp: %v", err, body, gpp)
-				continue
-			}
-
-			if len(body) == 0 {
-				continue
-			}
-
-			if len(lastbody) != 0 && bytes.Compare(lastbody, body) == 0 {
-				continue
-			}
-
-			if err := parse(body); err != nil {
-				clog.Error("conf.remoteConf() parse error, err: %v, body: %s", err, body)
-				continue
-			}
-
-			if err := savecontents(body); err != nil {
-				clog.Error("conf.remoteConf() savecontents error, err: %v, body: %s", err, body)
-				continue
-			}
-
-			lastbody = body
+		body, err := getcontents()
+		if err != nil || len(body) == 0 {
+			clog.Error("getcontents err: %v, body: %s", err, body)
+			continue
 		}
-	}()
+
+		if lastbody != nil && bytes.Compare(lastbody, body) == 0 {
+			continue
+		}
+
+		if err := parse(body); err != nil {
+			clog.Error("parse err: %v, body: %s", err, body)
+			continue
+		}
+
+		if err := savecontents(body); err != nil {
+			clog.Error("savecontents err: %v, body: %s", err, body)
+			continue
+		}
+
+		lastbody = body
+	}
 }
 
 func getcontents() (fcontent []byte, err error) {
@@ -171,47 +150,6 @@ func parse(fcontent []byte) (err error) {
 		return fmt.Errorf("env not right: %s", Env)
 	}
 
-	matchs := regexp.MustCompile(`[\w|\.]+|".*?[^\\"]"`).FindAllString(UserConf, -1)
-	for n, match := range matchs {
-		matchs[n] = strings.Replace(strings.Trim(match, "\""), `\"`, `"`, -1)
-	}
-	for n := 0; n < len(matchs); n += 2 {
-		name, value := matchs[n], matchs[n+1]
-
-		rv := reflect.Indirect(reflect.ValueOf(c))
-		for _, field := range strings.Split(name, ".") {
-			rv = reflect.Indirect(rv.FieldByName(strings.Title(field)))
-		}
-		switch rv.Kind() {
-		case reflect.String:
-			rv.SetString(value)
-		case reflect.Bool:
-			b, err := strconv.ParseBool(value)
-			if err != nil {
-				return err
-			}
-			rv.SetBool(b)
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			i, err := strconv.ParseInt(value, 10, 64)
-			if err != nil {
-				return err
-			}
-			rv.SetInt(i)
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			u, err := strconv.ParseUint(value, 10, 64)
-			if err != nil {
-				return err
-			}
-			rv.SetUint(u)
-		case reflect.Float32, reflect.Float64:
-			f, err := strconv.ParseFloat(value, 64)
-			if err != nil {
-				return err
-			}
-			rv.SetFloat(f)
-		}
-	}
-
 	c.Busi4Yar = map[string]map[string]*BusiElem{}
 	c.Busi4Http = map[string]*BusiElem{}
 	for _, v := range c.Busi {
@@ -238,9 +176,6 @@ func parse(fcontent []byte) (err error) {
 		}
 	}
 
-	// init log
-	clog.Init(c.Clog.Name, "", c.Clog.Level, c.Clog.Mode)
-
 	Set(c)
 
 	log.Printf("Env: %s\nC: %s\n", Env, utils.Iprint(c))
@@ -265,7 +200,6 @@ func Cgi(w http.ResponseWriter, r *http.Request) {
 
 func init() {
 	flag.StringVar(&Env, "env", "prod", "set env")
-	flag.StringVar(&UserConf, "conf", "", "set custom conf")
 	flag.Parse()
 
 	fcontent, err := getcontents()
@@ -279,5 +213,5 @@ func init() {
 		os.Exit(-1)
 	}
 
-	remoteConf()
+	go reloadConf()
 }
