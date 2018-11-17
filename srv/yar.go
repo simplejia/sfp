@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gyf19/yar-go/yar"
-	"github.com/simplejia/clog"
+	"github.com/simplejia/clog/api"
 	"github.com/simplejia/lc"
 	"github.com/simplejia/sfp/conf"
 	"github.com/simplejia/utils"

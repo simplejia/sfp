@@ -11,7 +11,7 @@ import (
 
 	"sort"
 
-	"github.com/simplejia/clog"
+	"github.com/simplejia/clog/api"
 	"github.com/simplejia/lc"
 	"github.com/simplejia/sfp/conf"
 	"github.com/simplejia/utils"

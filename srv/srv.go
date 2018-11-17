@@ -9,7 +9,7 @@ import (
 
 	"strings"
 
-	"github.com/simplejia/clog"
+	"github.com/simplejia/clog/api"
 	"github.com/simplejia/sfp/conf"
 )
 

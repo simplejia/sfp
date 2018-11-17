@@ -3,7 +3,7 @@ package srv
 import (
 	"io"
 
-	"github.com/simplejia/clog"
+	"github.com/simplejia/clog/api"
 	"github.com/simplejia/sfp/conf"
 )
 
